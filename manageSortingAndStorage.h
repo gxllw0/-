@@ -16,8 +16,8 @@ typedef struct Queue {
 
 // 定义树节点数据结构
 typedef struct TreeNode {
-    char addressPrefix[50];
-    Parcels parcels; // 快递链表
+    char address[50];
+    Parcels parcels; // 快递链表，地址相同存在一起 
     struct TreeNode* left;
     struct TreeNode* right;
 } TreeNode;
@@ -35,22 +35,27 @@ typedef struct LockersList {
     Locker* tail;
 } LockersList;
 
-// 函数声明
+// 队列 
 void initQueue(Queue* q);
 int enqueue(Queue* q, Parcel parcel);
 Parcel dequeue(Queue* q);
 int isQueueEmpty(Queue* q);
 
-TreeNode* createTreeNode(const char* addressPrefix);
-void insertIntoTree(TreeNode** root, const char* addressPrefix, Parcel parcel);
+// 树 
+TreeNode* createTreeNode(const char* address);
+void insertIntoTree(TreeNode** root, const char* address, Parcel parcel);
+void removeParcelFromTree(TreeNode **root, int parcelId, const char* address);
+int removeParcelFromList(Parcels *parcels, int parcelId);
+void deleteNode(TreeNode **root, const char *address); 
+TreeNode* findMinNode(TreeNode *node);
 void destroyTree(TreeNode* root);
+void sortParcelsFromQueue(Queue* sortingQueue, TreeNode** root);
 
 void initLockers(LockersList* lockers);
 Locker* allocateLocker(LockersList* lockers, Parcel parcel);
 void releaseLocker(LockersList* lockers, int lockerNumber);
 void printAllLockers(LockersList* lockers);
 void destroyLockers(LockersList* lockers);
-void sortParcelsFromQueue(Queue* sortingQueue, TreeNode** root);
 void manageLockers(LockersList* lockers);
 void movePendingToQueue(Parcels *parcels, Queue *sortingQueue);
 

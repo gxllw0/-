@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "parcelInfo.h"
 
 // 初始化链表
@@ -49,13 +51,6 @@ void updateParcelInfo(Parcels* parcels, int id) {
             scanf("%s", current->receiver);
             printf("请输入新的地址: ");
             scanf("%s", current->address);
-
-            // 添加状态修改选项
-            printf("请选择新的状态 (0:待分拣, 1:已分拣, 2:运输中, 3:已送达): ");
-            int statusChoice;
-            scanf("%d", &statusChoice);
-            current->Status = (ParcelStatus)statusChoice;
-
             printf("快递信息已更新。\n");
             return;
         }

@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "util.h"
 #include "menu.h"
 #include "usersManage.h"
@@ -85,18 +87,28 @@ void handleUserInput(SystemContext *context, int choice) {
                 case 1: // 查询用户自己的快递信息
                     queryParcelByReceiver(context->parcels, currentUser->username); 
                     break;
-                case 2: // 修改个人信息
-                    updateUserInfo(context->ht, currentUser->username, NULL, currentUser->role); 
-                    break;
+                case 2: {// 修改个人信息
+					char userName[50], oldPassword[50], newPassword[50];
+					printf("请输入旧密码: ");
+					scanf("%s", oldPassword);
+					if (strcmp(currentUser->password, oldPassword) != 0)
+					{
+						printf("旧密码错误!\n");
+						break;
+					}
+					printf("请输入新密码: ");
+					scanf("%s", newPassword);
+					changePassword(context->ht, currentUser->username, oldPassword, *newPassword ? newPassword : oldPassword);
+					} 
+	                break;
                 case 3: // 退出登录
                     setCurrentUser(NULL); // 清除当前用户
                     printf("您已成功退出登录。\n");
                     return; // 返回到主循环外，即登录界面
                 default:
                     printf("无效的选择，请重新输入。\n");
-            }
-            break;
-
+            	break;
+			}
         case COURIER:
             switch (choice) {
                 case 1: // 管理快递信息
@@ -104,28 +116,32 @@ void handleUserInput(SystemContext *context, int choice) {
                     break;
                 case 2: // 分拣与存储管理
 					manageSortingAndStorage(context->parcels, context->sortingQueue, context->root, context->lockers); 
+			    
+				
+				if (isQueueEmpty(&context->sortingQueue)) {
+			    	printf("queue is empty handle down\n");
+				} else {
+			    	printf("queue is not empty handle down\n");					
+				}
+
                     break;
                 case 3: // 配送管理
-                    
-					if (isPriorityQueueEmpty(&context->pq)) {
-                    	printf("pq is emtpy in courier menu up\n");
-					} else {
-						printf("pq is not empty in courier menu up\n");
-					}
-                                    
-                
-                    manageDelivery(context->parcels, context->graph, &context->pq);
-                    
-                    if (isPriorityQueueEmpty(&context->pq)) {
-                    	printf("pq is emtpy in courier menu down\n");
-					} else {
-						printf("pq is not empty in courier menu down\n");
-					}
-                    
+                    manageDelivery(context->parcels, context->root, context->graph, &context->pq);
                     break;
-                case 4: // 修改个人信息
-                    updateUserInfo(context->ht, currentUser->username, NULL, currentUser->role); 
+                case 4: {// 修改个人信息
+					char userName[50], oldPassword[50], newPassword[50];
+					printf("请输入旧密码: ");
+					scanf("%s", oldPassword);
+					if (strcmp(currentUser->password, oldPassword) != 0)
+					{
+						printf("旧密码错误!\n");
+						break;
+					}
+					printf("请输入新密码: ");
+					scanf("%s", newPassword);
+					changePassword(context->ht, currentUser->username, oldPassword, *newPassword ? newPassword : oldPassword);
                     break;
+				}
                 case 5: // 退出登录
                     setCurrentUser(NULL); // 清除当前用户
                     printf("您已成功退出登录。\n");
@@ -134,7 +150,6 @@ void handleUserInput(SystemContext *context, int choice) {
                     printf("无效的选择，请重新输入。\n");
             }
             break;
-
         case ADMIN:
             switch (choice) {
                 case 1: // 管理快递信息
@@ -153,7 +168,19 @@ void handleUserInput(SystemContext *context, int choice) {
                     generateStatistics();
                     break;
                 case 6: // 修改个人信息
-                     updateUserInfo(context->ht, currentUser->username, NULL, currentUser->role);
+                    {
+  						char userName[50], oldPassword[50], newPassword[50];
+  						printf("请输入旧密码: ");
+  						scanf("%s", oldPassword);
+  						if (strcmp(currentUser->password, oldPassword) != 0)
+						{
+   							printf("旧密码错误!\n");
+   							break;
+						}
+  						printf("请输入新密码: ");
+  						scanf("%s", newPassword);
+  						changePassword(context->ht, currentUser->username, oldPassword, *newPassword ? newPassword : oldPassword);
+					}
                     break;
                 case 7: // 退出登录
                     setCurrentUser(NULL); // 清除当前用户
@@ -177,6 +204,7 @@ void manageParcelInfo(Parcels* parcels) {
     printf("| 5. 多维度排序            |\n");
     printf("| 6. 导入文件              |\n");
     printf("| 7. 导出文件              |\n");
+    printf("| 8. 返回上一级            |\n");
     printf("-----------------------------\n");
     int subChoice;
     printf("请输入您的选择: ");
@@ -246,6 +274,8 @@ void manageParcelInfo(Parcels* parcels) {
         case 7:
             batchExport(parcels); 
             break;
+        case 8:
+			break; 
         default:
             printf("无效的选择，请重新输入。\n");
     }    
@@ -272,30 +302,34 @@ void manageUsers(HashTable* ht) {
         }
 
         switch (subChoice) {
-            case 1: {
-                char username[50], oldPassword[50], newPassword[50];
-                char newUsername[50];
-                Role newRole;
-                printf("请输入当前用户名: ");
-                scanf("%s", username);
-                printf("请输入旧密码: ");
-                scanf("%s", oldPassword);
-                printf("请输入新密码 (留空则不更改): ");
-                scanf("%s", newPassword);
-                printf("请输入新的用户名 (留空则不更改): ");
-                scanf("%s", newUsername);
-                printf("请选择新的角色 (1 - 学生, 2 - 快递员, 3 - 管理员, 或者留空不更改): ");
-                int roleChoice;
-                if (scanf("%d", &roleChoice) == 1 && roleChoice >= 1 && roleChoice <= 3) {
-                    newRole = (Role)(roleChoice - 1);
-                } else {
-                    newRole = STUDENT; // 默认值，若用户选择不更改，则保持原样
-                }
-                changePassword(ht, username, oldPassword, *newPassword ? newPassword : oldPassword);
-                updateUserInfo(ht, username, *newUsername ? newUsername : NULL, newRole);
-                break;
-            }
-            case 2: {
+            case 1: 
+				{
+    				char username[50], newPassword[50];
+    				Role newRole;
+    				printf("请输入用户名: ");
+    				scanf("%s", username);
+	    			User* user = findUser(ht, username);
+    				if(user == NULL)
+					{
+						printf("没有找到该用户！");
+       					break;
+	    			}
+    				printf("请输入新密码: ");
+    				scanf("%s", newPassword);
+    				printf("请选择新的角色 (1 - 学生, 2 - 快递员, 3 - 管理员): ");
+    				int roleChoice = getIntChoice();
+    				if (roleChoice >= 1 && roleChoice <= 3) {
+        				newRole = (Role)(roleChoice - 1);
+    				} else {
+    				    printf("输入无效！");
+						break; // 默认值，若用户选择不更改，则保持原样
+    				}
+	    			changePassword(ht, username, user->password, *newPassword ? newPassword : user->password);
+ 		   			updateUserInfo(ht, username, newRole);
+				}
+				break;
+            case 2: 
+			{
                 char username[50];
                 printf("请输入要删除的用户名: ");
                 scanf("%s", username);
@@ -327,11 +361,12 @@ void manageUsers(HashTable* ht) {
                 }
                 break;
             }
-            case 3: {
+            case 3: 
+			{
                  for (int i = 0; i < TABLE_SIZE; ++i) {
                     User* current = ht->table[i];
                     while (current != NULL) {
-                        printf("用户名: %s, 角色: %s\n", current->username, roleToString(current->role));
+                        printf("用户名: %s, 角色: %s, 密码: %s\n", current->username, roleToString(current->role),current->password);
                         current = current->next;
                     }
                 }
@@ -365,8 +400,22 @@ void manageSortingAndStorage(Parcels *parcels, Queue sortingQueue, TreeNode* roo
             	sortParcels(parcels, 4);
                 // 将所有待分拣的快递加入队列，并执行分拣操作
 			    movePendingToQueue(parcels, &sortingQueue);
+			    
+			    if (isQueueEmpty(&sortingQueue)) {
+			    	printf("queue is empty after sorting\n");
+				} else {
+			    	printf("queue is not empty after sorting\n");					
+				}
+			    
 			    // 接下来对队列中的元素（即待分拣的快递）按照地址进行分类，并存储到树结构中
-			    sortParcelsFromQueue(&sortingQueue, &root);               
+			    sortParcelsFromQueue(&sortingQueue, &root); 
+					 
+			    if (root == NULL) {
+			    	printf("root is empty menu down.\n");
+				} else {
+			    	printf("root is not empty menu down.\n");		
+				}		
+			             
                 printf("快递已成功分拣。\n");
                 printf("按状态"); 
             	sortParcels(parcels, 4);                
@@ -380,7 +429,7 @@ void manageSortingAndStorage(Parcels *parcels, Queue sortingQueue, TreeNode* roo
     } while (subChoice != 5);
 }
 
-void manageDelivery(Parcels *parcels, Graph graph, PriorityQueue* pq) {
+void manageDelivery(Parcels *parcels, TreeNode* root, Graph graph, PriorityQueue* pq) {
     printf("\n-----------------------------\n");
     printf("| 配送管理                 |\n");
     printf("-----------------------------\n");
@@ -395,12 +444,6 @@ void manageDelivery(Parcels *parcels, Graph graph, PriorityQueue* pq) {
     switch (subChoice) {
         case 1: // 配送 
         	displayAdjacencyGraph(&graph); // 展现校园结构
-			
-			if (isPriorityQueueEmpty(pq)) {
-				printf("pq is empty befroe diaoyong\n");
-			} else {
-				printf("empty before diaoyong\n");
-			}
             deliverParcels(parcels, &graph, pq); // 配送快递 
             break;
         case 2: // 快递加急处理 
@@ -408,7 +451,7 @@ void manageDelivery(Parcels *parcels, Graph graph, PriorityQueue* pq) {
                 int parcelId;
                 printf("请输入要加急处理的快递ID: ");
                 scanf("%d", &parcelId);
-                expediteParcels(parcelId, parcels, &graph,  pq); // 根据id加急快递 
+                expediteParcels(parcelId, parcels, &root, &graph,  pq); // 根据id加急快递 
                 if (isPriorityQueueEmpty(pq)) {
                 	printf("pq is empty in menu\n");
 				} else {

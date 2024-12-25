@@ -21,7 +21,7 @@ void manageUsers(HashTable* ht);
 // 快递分拣与存储模块 
 void manageSortingAndStorage(Parcels* parcels, Queue sortingQueue, TreeNode* root, LockersList lockers); 
 // 快递配送模块 
-void manageDelivery(Parcels *parcels, Graph graph, PriorityQueue* pq);
+void manageDelivery(Parcels *parcels, TreeNode* root, Graph graph, PriorityQueue* pq);
 // 数据可视化模块 
 void generateStatistics();
 

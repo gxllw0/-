@@ -35,13 +35,14 @@ int isPriorityQueueEmpty(PriorityQueue* pq) {
 }
 
 // 向优先队列中添加一项
-void priorityenqueue(PriorityQueue* pq, int vertexIndex, double priority) {
+void priorityenqueue(PriorityQueue* pq, int vertex, Parcel *parcel, double priority) {
     PriorityQueueItem* newItem = (PriorityQueueItem*)malloc(sizeof(PriorityQueueItem));
     if (newItem == NULL) {
     	printf("优先队列项分配内存失败\n");
     	return ;
 	}
-    newItem->vertexIndex = vertexIndex;
+	newItem->vertex = vertex;
+    newItem->parcel = parcel;
     newItem->priority = priority;
     newItem->next = NULL;
 
@@ -85,7 +86,7 @@ void displayAdjacencyGraph(Graph* graph) {
 void dijkstra(Graph* graph, int start, int end, double distances[], int previous[]) {
     double INFINITY = DBL_MAX;
     int visited[6] = {0};
-    
+
     // 初始化距离和访问状态
     for (int i = 0; i < graph->vertexCount; ++i) {
         distances[i] = INFINITY;
@@ -95,12 +96,15 @@ void dijkstra(Graph* graph, int start, int end, double distances[], int previous
 
     PriorityQueue pq;
     initPriorityQueue(&pq);
-    priorityenqueue(&pq, start, 0);
+    priorityenqueue(&pq, start, NULL, 0);
 
-    while (pq.head != NULL) {
+    while (!isPriorityQueueEmpty(&pq)) {
         PriorityQueueItem* item = prioritydequeue(&pq);
-        int u = item->vertexIndex;
-        free(item);
+        if (item == NULL) continue; // 检查 dequeue 是否成功
+
+        int u = item->vertex; // 直接使用 vertex 作为索引
+        free(item); // 释放优先队列项
+
         if (visited[u]) continue;
         visited[u] = 1;
 
@@ -114,7 +118,7 @@ void dijkstra(Graph* graph, int start, int end, double distances[], int previous
                 if (newDist < distances[v]) {
                     distances[v] = newDist;
                     previous[v] = u;
-                    priorityenqueue(&pq, v, newDist);
+                    priorityenqueue(&pq, v, NULL, newDist);
                 }
             }
             edge = edge->next;
@@ -123,12 +127,15 @@ void dijkstra(Graph* graph, int start, int end, double distances[], int previous
 }
 
 // 最优配送路径
-void displayOptimalDeliveryPath(Graph* graph, int start, int end) {
+void displayOptimalDeliveryPath(Graph* graph, int start, int end, Parcel* parcel) {
     double distances[6];
     int previous[6];
 
     dijkstra(graph, start, end, distances, previous);
 
+	printf("ds成功\n");
+	parcel->Status = DELIVERED;
+	
     // 打印路径
     if (distances[end] == DBL_MAX) {
         printf("无法到达目的地。\n");
@@ -139,13 +146,17 @@ void displayOptimalDeliveryPath(Graph* graph, int start, int end) {
     for (int at = end; at != -1; at = previous[at]) {
         path[index++] = at;
     }
-
+	
+	printf("id: %d\t寄件人: %s\t收件人: %s送达%s\n", parcel->id, parcel->sender, parcel->receiver, parcel->address);
+	printf("自动分配到%s地点的快递柜\n", parcel->address); // 把快递节点加载到快递柜中 
     printf("路径: ");
     for (int i = index - 1; i >= 0; --i) {
         printf("%s", graph->vertices[path[i]].name);
         if (i > 0) printf(" -> ");
     }
     printf("\n");
+    
+//    printf(""); // 打印取件码 
 }
 
 //初始化校园快递图 
@@ -204,7 +215,10 @@ void traverseAndDeliver(Parcels* parcels, Graph* graph) {
 
         // 如果转换成功，则使用最短路径算法计算最优配送路径并打印
         if (destinationIndex >= 0) {
-            displayOptimalDeliveryPath(graph, 0, destinationIndex); // 假设所有快递都从“快递总站”出发
+        	if (current->Status == SORTED) {
+        		current->Status = DELIVERED;
+            	displayOptimalDeliveryPath(graph, 0, destinationIndex, current); // 假设所有快递都从“快递总站”出发
+			}
         } else {
             // 显示地址错误信息并跳过此快递
             printf("地址错误: %s\n", current->address);
@@ -216,87 +230,63 @@ void traverseAndDeliver(Parcels* parcels, Graph* graph) {
 
 void deliverParcels(Parcels* parcels, Graph* graph, PriorityQueue* pq) {
     if (!parcels || !graph) return;
-
-	if (isPriorityQueueEmpty(pq)) {
-		printf("pq is empty11\n");
-	} else {
-		printf("pq is not empty2\n");
-	}
     // 首先处理所有加急快递
     while (!isPriorityQueueEmpty(pq)) {
-    	
-    	printf("1111\n");
-        
 		PriorityQueueItem* urgentItem = prioritydequeue(pq);
         if (urgentItem) {
             // 使用最短路径算法计算最优配送路径并打印
-            displayOptimalDeliveryPath(graph, 0, urgentItem->vertexIndex);
 
+            int start = 0;
+            int end = convertAddressToIndex(graph, urgentItem->parcel->address);
+            displayOptimalDeliveryPath(graph, start, end, urgentItem->parcel);
             printf("加急快递已送达。\n");
             free(urgentItem);
         }
     }
-
     // 然后处理普通快递
     traverseAndDeliver(parcels, graph);
 }
 
 // 查找快递信息并返回指向该快递的指针
-Parcel* findParcelById(Parcels* parcels, int id) {
-    if (!parcels || !parcels->head) return NULL;
-
-    Parcel *current = parcels->head;
-    while (current != NULL && current->id != id) {
-        current = current->next;
-    }
-
-    // 如果找到了匹配的快递，则返回指向它的指针
-    if (current != NULL && current->id == id) {
-        return current;
-    } else {
-        return NULL; // 未找到快递
-    }
-}
+//Parcel* findParcelById(Parcels* parcels, int id) {
+//    if (!parcels || !parcels->head) return NULL;
+//
+//    Parcel *current = parcels->head;
+//    while (current != NULL && current->id != id) {
+//        current = current->next;
+//    }
+//
+//    // 如果找到了匹配的快递，则返回指向它的指针
+//    if (current != NULL && current->id == id) {
+//        return current;
+//    } else {
+//        return NULL; // 未找到快递
+//    }
+//}
 
 //处理加急快递 
-void expediteParcels(int parcelId, Parcels* parcels, Graph* graph, PriorityQueue* pq) {
-    if (!parcels) {
-        printf("未找到ID为 %d 的快递或链表为空。\n", parcelId);
+void expediteParcels(int parcelId, Parcels* parcels, TreeNode** root, Graph* graph, PriorityQueue* pq) {
+    // 查找快递
+    Parcel *parcel = findParcelById(parcels, parcelId);
+    if (!parcel) {
+        printf("未找到该快递。\n");
         return;
     }
 
-    // 查找快递信息
-    Parcel* parcel = findParcelById(parcels, parcelId);
-    if (parcel) { // 找到快递
-        // 将快递状态更新为加急
-        parcel->Status = URGENT;
-//        strcpy(parcel->Status, "加急");
+    // 打印出正在加急处理的信息
+    printf("正在为ID %d的快递设置加急状态...\n", parcelId);
 
-        // 将找到的快递加入优先队列（这里只添加目的地索引）
-        int destinationIndex = convertAddressToIndex(graph, parcel->address);
-        if (destinationIndex >= 0) {
-            priorityenqueue(pq, destinationIndex, 0); // 假设优先级为0表示最高优先级
-            
-            if (isPriorityQueueEmpty(pq)) {
-            	printf("YES\n");
-			} else {
-				printf("NO\n"); 
-//				PriorityQueueItem* tmp = prioritydequeue(pq);
-//				printf("%d\n", tmp->vertexIndex);
-				if (isPriorityQueueEmpty(pq)) {
-					printf("YES2\n");
-				} else {
-					printf("NO2\n");
-				}
-			}
-            
-            printf("快递 ID: %d 已被标记为加急并加入加急队列。\n", parcelId);
-        } else {
-            printf("地址错误: %s\n", parcel->address);
-        }
-    } else {
-        printf("未找到ID为 %d 的快递。\n", parcelId);
-    }
+    // 添加到优先队列（假设优先队列中的元素是 PriorityParcel 类型）
+    priorityenqueue(pq, 0, parcel, 0);
+
+    // 从树中移除快递（假设根节点是全局变量或者通过其他方式传递）
+    removeParcelFromTree(root, parcelId, parcel->address); // 需要实现此函数
+
+    // 更新状态为加急
+    parcel->Status = URGENT;
+
+    // 输出成功信息
+    printf("ID %d 的快递已成功设置为加急状态。\n", parcelId);
 }
 
 

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "usersManage.h"
 
 
@@ -120,14 +121,11 @@ void getUserInfo(HashTable* ht, char* username) {
     printf("用户名: %s, 角色: %s\n", username, roleToString(user->role));
 }
 
-void updateUserInfo(HashTable* ht, char* username, char* newUserName, Role new_role) {
+void updateUserInfo(HashTable* ht, char* username, Role new_role) {
     User* user = findUser(ht, username);
     if (user == NULL) {
         printf("用户不存在\n");
         return;
-    }
-    if (newUserName && strlen(newUserName) > 0) {
-        strcpy(user->username, newUserName);
     }
     user->role = new_role;
     printf("用户信息更新成功\n");

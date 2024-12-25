@@ -7,8 +7,8 @@
 #include "manageDelivery.h"
 
 typedef struct {
-    Parcels* parcels;
-    HashTable* ht;
+    Parcels* parcels; 
+    HashTable* ht; 
     Queue sortingQueue;
     TreeNode* root;
     LockersList lockers;

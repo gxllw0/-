@@ -31,7 +31,7 @@ void registerUser(HashTable* ht, char* username, char* password, Role role);
 void loginUser(HashTable* ht, char* username, char* password);
 void changePassword(HashTable* ht, char* username, char* old_password, char* new_password);
 void getUserInfo(HashTable* ht, char* username);
-void updateUserInfo(HashTable* ht, char* username, char* newUserName, Role new_role);
+void updateUserInfo(HashTable* ht, char* username, Role new_role);
 int hasPermission(User* user, Role required_role);
 
 #endif // USERS_MANAGE_H
