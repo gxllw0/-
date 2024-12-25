@@ -3,7 +3,7 @@
 
 #include "parcelInfo.h"
 
-// 定义队列相关数据结构
+// 队列
 typedef struct QueueNode {
     Parcel parcel;
     struct QueueNode* next;
@@ -14,7 +14,7 @@ typedef struct Queue {
     QueueNode* rear;
 } Queue;
 
-// 定义树节点数据结构
+// 树
 typedef struct TreeNode {
     char address[50];
     Parcels parcels; // 快递链表，地址相同存在一起 
@@ -22,41 +22,32 @@ typedef struct TreeNode {
     struct TreeNode* right;
 } TreeNode;
 
-// 定义快递柜系统数据结构
+// 快递柜
 typedef struct Locker {
-    int lockerNumber;
-    char pickupCode[10]; // 取件码
-    Parcel parcel;
-    struct Locker* next; // 指向下个快递柜的指针
+	Parcel* head;	
 } Locker;
 
-typedef struct LockersList {
-    Locker* head;
-    Locker* tail;
-} LockersList;
-
-// 队列 
+// 初始化队列 
 void initQueue(Queue* q);
+// 进队 
 int enqueue(Queue* q, Parcel parcel);
+// 出队 
 Parcel dequeue(Queue* q);
+// 判断队列是否为空 
 int isQueueEmpty(Queue* q);
 
-// 树 
+// 创建树节点 
 TreeNode* createTreeNode(const char* address);
+// 将快递插入树中 
 void insertIntoTree(TreeNode** root, const char* address, Parcel parcel);
+// 从树中移除快递 
 void removeParcelFromTree(TreeNode **root, int parcelId, const char* address);
-int removeParcelFromList(Parcels *parcels, int parcelId);
-void deleteNode(TreeNode **root, const char *address); 
-TreeNode* findMinNode(TreeNode *node);
+// 释放整棵树 
 void destroyTree(TreeNode* root);
-void sortParcelsFromQueue(Queue* sortingQueue, TreeNode** root);
 
-void initLockers(LockersList* lockers);
-Locker* allocateLocker(LockersList* lockers, Parcel parcel);
-void releaseLocker(LockersList* lockers, int lockerNumber);
-void printAllLockers(LockersList* lockers);
-void destroyLockers(LockersList* lockers);
-void manageLockers(LockersList* lockers);
+// 将待处理的快递放入队列中 
 void movePendingToQueue(Parcels *parcels, Queue *sortingQueue);
+// 将队列中快递分类存入树中 
+void sortParcelsFromQueue(Queue* sortingQueue, TreeNode** root);
 
 #endif

@@ -3,6 +3,8 @@
 #include "system.h"
 
 SystemContext* initializeSystem() {
+    srand(time(NULL));
+		
     SystemContext* context = (SystemContext*)malloc(sizeof(SystemContext));
     if (!context) {
         printf("初始化分配内存失败。\n");
@@ -31,9 +33,6 @@ SystemContext* initializeSystem() {
 	//初始化树 
     context->root = NULL;
 
-	//初始化快递柜 
-    initLockers(&context->lockers);
-	
 	//初始化图 
     initCampusDeliveryGraph(&context->graph);
 	

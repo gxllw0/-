@@ -11,7 +11,6 @@ typedef struct {
     HashTable* ht; 
     Queue sortingQueue;
     TreeNode* root;
-    LockersList lockers;
     Graph graph;
     PriorityQueue pq;
 } SystemContext;

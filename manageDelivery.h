@@ -1,9 +1,8 @@
 #include "manageSortingAndStorage.h"
 
- 
 // 图的边 
 typedef struct Edge {
-    int destination;
+    int dest;
     double weight;
     struct Edge* next;
 } Edge;
@@ -11,6 +10,7 @@ typedef struct Edge {
 // 图的顶点
 typedef struct Vertex {
     char name[50];
+    Locker* locker;
     Edge* edges;
 } Vertex;
 
@@ -22,7 +22,7 @@ typedef struct Graph {
 
 // 优先队列项
 typedef struct PriorityQueueItem {
-	Parcel *parcel;	
+	Parcel* parcel;	
 	int vertex;	
     double priority;
     struct PriorityQueueItem* next;
@@ -35,10 +35,8 @@ typedef struct PriorityQueue {
 
 // 创建图
 void createGraph(Graph* graph, int numVertices);
-
 // 添加边
 void addEdge(Graph* graph, int src, int dest, double weight);
-
 // 初始化优先队列
 void initPriorityQueue(PriorityQueue* pq);
 // 检查优先队列是否为空
@@ -61,8 +59,8 @@ void displayOptimalDeliveryPath(Graph* graph, int start, int end, Parcel* parcel
 
 //初始化校园快递图 
 void initCampusDeliveryGraph(Graph* graph);
-//把A~E转换为1~5 
-int convertAddressToIndex(Graph* graph, const char* address);
+//把地址下标转换为1~5 
+int addressToIndex(Graph* graph, const char* address);
 //普通快递的配送 
 void traverseAndDeliver(Parcels* parcels, Graph* graph);
 
@@ -75,3 +73,5 @@ Parcel* findParcelById(Parcels* parcels, int id);
 void expediteParcels(int parcelId, Parcels* parcels, TreeNode** root, Graph* graph, PriorityQueue* pq);
 // 更新配送状态
 void updateParcelStatus(Parcels* parcels, int parcelId, const char* status);
+// 取快递 
+void getParcel(Graph* graph, Parcels* parcels);

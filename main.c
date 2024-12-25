@@ -32,7 +32,7 @@ int main() {
 	        }
 		}
 		// 显示主菜单并处理用户输入
-	    while (getCurrentUser() != NULL) { // 当用户没有选择退出时，循环菜单 
+	    while (currentUser != NULL) { // 当用户没有选择退出时，循环菜单 
 	        displayMenu(currentUser); // 根据角色生成菜单
 	        int choice = getIntChoice();
 	        handleUserInput(systemContext, choice);

@@ -9,7 +9,13 @@ void initParcels(Parcels* parcels) {
 }
 
 // 添加快递信息
-void addParcelInfo(Parcels *parcels, int id, char* sender, char* receiver, char* address) {
+void addParcelInfo(Parcels *parcels, int id, const char* sender, const char* receiver, const char* address, const char *code) {
+    if(strcmp(address,"A") < 0 || strcmp(address,"E") > 0 || strlen(address) != 1 ){
+        printf("地址输入错误!\n");
+        return;
+    }
+    
+    // 查找id是否重复 
 	Parcel *current = parcels->head;
     while (current != NULL && current->id != id) {
         current = current->next;
@@ -18,17 +24,18 @@ void addParcelInfo(Parcels *parcels, int id, char* sender, char* receiver, char*
         printf("该id已存在!\n");
         return;
     }
-
+	
+	// 如果id不重复，将节点加入链表 
     Parcel *node = (Parcel*)malloc(sizeof(Parcel));
     if (!node) {
         printf("内存分配失败。\n");
         return;
     }
-    
     node->id = id;
     strcpy(node->sender, sender);
     strcpy(node->receiver, receiver);
     strcpy(node->address, address);
+    strcpy(node->code, code);
     node->Status = PENDING_SORTING; // 初始化状态为待分拣    
     if (parcels->head == NULL) {
     	node->next = NULL;
@@ -38,6 +45,16 @@ void addParcelInfo(Parcels *parcels, int id, char* sender, char* receiver, char*
 		parcels->head = node;
 	}
     printf("快递信息已添加。\n");
+}
+
+void addParcel(Parcels* parcels, Parcel* node) {
+	if (parcels->head == NULL) {
+    	node->next = NULL;
+    	parcels->head = node;
+	} else {
+		node->next = parcels->head;
+		parcels->head = node;
+	}	
 }
 
 // 修改快递信息
@@ -97,7 +114,7 @@ void queryParcelInfo(Parcels* parcels, int id) {
     printf("未找到该快递信息。\n");
 }
 
-// 查询收件人快递信息 
+// 根据收件人查询快递信息 
 void queryParcelByReceiver(Parcels* parcels, char receiver[]) {
     Parcel* current = parcels->head;
     int cnt = 0;
@@ -120,6 +137,7 @@ void queryParcelByReceiver(Parcels* parcels, char receiver[]) {
 	}
 }
 
+// 释放链表 
 void freeParcels(Parcels* parcels){
 	if (parcels == NULL || parcels->head == NULL) {
 		return ;
@@ -135,6 +153,7 @@ void freeParcels(Parcels* parcels){
     free(pre); 
 }
 
+// 获取快递状态 
 char* parcelStatusToString(ParcelStatus status) {
     switch (status) {
         case PENDING_SORTING: return "待分拣";
@@ -146,6 +165,8 @@ char* parcelStatusToString(ParcelStatus status) {
     }
 }
 
+
+// 多维度排序（归并） 
 typedef int (*CompareFunc)(const Parcel*, const Parcel*);
 
 // 比较函数：按ID排序
@@ -294,7 +315,7 @@ void batchImport(Parcels* parcels){
     int id;
     char sender[50], receiver[50], address[100], status[20];
     while (fscanf(file, "%d,%[^,],%[^,],%[^,],%s\n", &id, sender, receiver, address, status) != EOF) {
-        addParcelInfo(parcels, id, sender, receiver, address);
+        addParcelInfo(parcels, id, sender, receiver, address, "000");
     }
     fclose(file);
     printf("快递信息已从 parcels.txt 导入。\n");

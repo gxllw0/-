@@ -9,23 +9,28 @@ typedef enum {
     URGENT 			 // 加急 
 } ParcelStatus;
 
+// 快递节点 
 typedef struct Parcel {
     int id;
     char sender[50];
     char receiver[50];
-    char address[100];
-    ParcelStatus Status; // 新增的状态字段
+    char address[50];
+    char code[7];
+    ParcelStatus Status;
     struct Parcel* next;
 } Parcel;
 
+// 快递链表 
 typedef struct Parcels {
     Parcel* head;
 } Parcels;
 
 // 初始化链表
 void initParcels(Parcels* parcels);
-// 添加快递 
-void addParcelInfo(Parcels *parcels, int id, char* sender, char* receiver, char* address); 
+// 新添快递（有新增节点） 
+void addParcelInfo(Parcels* parcels, int id, const char* sender, const char* receiver, const char* address, const char* code); 
+// 将快递加入链表（没有重新分配内存） 
+void addParcel(Parcels* parcels, Parcel* parcel);
 // 根据快递id更新快递信息 
 void updateParcelInfo(Parcels* parcels, int id); 
 // 根据快递id删除快递 

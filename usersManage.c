@@ -8,10 +8,6 @@ void setCurrentUser(User* user) {
     currentUser = user;
 }
 
-User* getCurrentUser() {
-    return currentUser;
-}
-
 unsigned int hash(char* key) {
     unsigned int hash = 0;
     while (*key) {
@@ -21,7 +17,7 @@ unsigned int hash(char* key) {
 }
 
 HashTable* createTable() {
-    HashTable* ht = (HashTable*)malloc(sizeof(HashTable)); // 显式类型转换
+    HashTable* ht = (HashTable*)malloc(sizeof(HashTable)); 
     for (int i = 0; i < TABLE_SIZE; i++) {
         ht->table[i] = NULL;
     }
@@ -54,17 +50,17 @@ User* findUser(HashTable* ht, char* username) {
 
 char* roleToString(Role role) {
     switch (role) {
-        case STUDENT: return "student";
-        case COURIER: return "courier";
-        case ADMIN: return "admin";
-        default: return "unknown";
+        case STUDENT: return "学生";
+        case COURIER: return "快递员";
+        case ADMIN: return "管理员";
+        default: return "未知用户";
     }
 }
 
 Role stringToRole(const char* roleStr) {
-    if (strcmp(roleStr, "student") == 0) return STUDENT;
-    if (strcmp(roleStr, "courier") == 0) return COURIER;
-    if (strcmp(roleStr, "admin") == 0) return ADMIN;
+    if (strcmp(roleStr, "学生") == 0) return STUDENT;
+    if (strcmp(roleStr, "快递员") == 0) return COURIER;
+    if (strcmp(roleStr, "管理员") == 0) return ADMIN;
     return STUDENT;
 }
 
@@ -73,7 +69,7 @@ void registerUser(HashTable* ht, char* username, char* password, Role role) {
         printf("用户名已存在\n");
         return;
     }
-    User* newUser = (User*)malloc(sizeof(User)); // 显式类型转换
+    User* newUser = (User*)malloc(sizeof(User));
     strcpy(newUser->username, username);
     strcpy(newUser->password, password);
     newUser->role = role;
@@ -129,11 +125,4 @@ void updateUserInfo(HashTable* ht, char* username, Role new_role) {
     }
     user->role = new_role;
     printf("用户信息更新成功\n");
-}
-
-int hasPermission(User* user, Role required_role) {
-    if (user == NULL) {
-        return 0;
-    }
-    return user->role >= required_role;
 }

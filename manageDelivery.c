@@ -1,10 +1,11 @@
-#include "manageDelivery.h"
- 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 #include <float.h>
+#include "parcelInfo.h"
+#include "manageDelivery.h"
+#include "util.h"
 
 // 创建图
 void createGraph(Graph* graph, int numVertices) {
@@ -12,13 +13,14 @@ void createGraph(Graph* graph, int numVertices) {
     for (int i = 0; i < numVertices; ++i) {
         strcpy(graph->vertices[i].name, "");
         graph->vertices[i].edges = NULL;
+        graph->vertices[i].locker = (Locker*)malloc(sizeof(Locker));
     }
 }
 
 // 添加边
 void addEdge(Graph* graph, int src, int dest, double weight) {
     Edge* newEdge = (Edge*)malloc(sizeof(Edge));
-    newEdge->destination = dest;
+    newEdge->dest = dest;
     newEdge->weight = weight;
     newEdge->next = graph->vertices[src].edges;
     graph->vertices[src].edges = newEdge;
@@ -75,7 +77,7 @@ void displayAdjacencyGraph(Graph* graph) {
         printf("%s ", graph->vertices[i].name);
         Edge* edge = graph->vertices[i].edges;
         while (edge != NULL) {
-            printf("-> %s (%.1f)", graph->vertices[edge->destination].name, edge->weight);
+            printf("-> %s (%.1f)", graph->vertices[edge->dest].name, edge->weight);
             edge = edge->next;
         }
         printf("\n");
@@ -112,7 +114,7 @@ void dijkstra(Graph* graph, int start, int end, double distances[], int previous
 
         Edge* edge = graph->vertices[u].edges;
         while (edge != NULL) {
-            int v = edge->destination;
+            int v = edge->dest;
             if (!visited[v]) {
                 double newDist = distances[u] + edge->weight;
                 if (newDist < distances[v]) {
@@ -132,8 +134,7 @@ void displayOptimalDeliveryPath(Graph* graph, int start, int end, Parcel* parcel
     int previous[6];
 
     dijkstra(graph, start, end, distances, previous);
-
-	printf("ds成功\n");
+    
 	parcel->Status = DELIVERED;
 	
     // 打印路径
@@ -147,8 +148,9 @@ void displayOptimalDeliveryPath(Graph* graph, int start, int end, Parcel* parcel
         path[index++] = at;
     }
 	
-	printf("id: %d\t寄件人: %s\t收件人: %s送达%s\n", parcel->id, parcel->sender, parcel->receiver, parcel->address);
-	printf("自动分配到%s地点的快递柜\n", parcel->address); // 把快递节点加载到快递柜中 
+	printf("快递（id: %d\t寄件人: %s\t收件人: %s）送达%s\n", parcel->id, parcel->sender, parcel->receiver, parcel->address);
+	printf("自动分配到%s地点的快递柜\n", parcel->address);
+	printf("取件码为%s\n", parcel->code);
     printf("路径: ");
     for (int i = index - 1; i >= 0; --i) {
         printf("%s", graph->vertices[path[i]].name);
@@ -169,7 +171,10 @@ void initCampusDeliveryGraph(Graph* graph) {
     strcpy(graph->vertices[3].name, "C");
     strcpy(graph->vertices[4].name, "D");
     strcpy(graph->vertices[5].name, "E");
-
+	for (int i = 0; i <= 5; i++) {
+		graph->vertices[i].locker->head = NULL;
+	}
+	
     addEdge(graph, 0, 1, 5.0); // 快递总站 -> A
     addEdge(graph, 1, 0, 5.0); // A -> 快递总站 
     
@@ -197,7 +202,7 @@ void initCampusDeliveryGraph(Graph* graph) {
 
 
 // 根据地址字符串转换为顶点索引
-int convertAddressToIndex(Graph* graph, const char* address) {
+int addressToIndex(Graph* graph, const char* address) {
     for (int i = 0; i < graph->vertexCount; ++i) {
         if (strcmp(graph->vertices[i].name, address) == 0) {
             return i;
@@ -211,13 +216,21 @@ void traverseAndDeliver(Parcels* parcels, Graph* graph) {
 
     Parcel* current = parcels->head;
     while (current != NULL) {
-        int destinationIndex = convertAddressToIndex(graph, current->address);
+        int destIdx = addressToIndex(graph, current->address);
 
         // 如果转换成功，则使用最短路径算法计算最优配送路径并打印
-        if (destinationIndex >= 0) {
+        if (destIdx >= 0) {
         	if (current->Status == SORTED) {
-        		current->Status = DELIVERED;
-            	displayOptimalDeliveryPath(graph, 0, destinationIndex, current); // 假设所有快递都从“快递总站”出发
+	            char code[7];
+				generateCode(code);
+				// 更新总快递链表的信息 
+				strcpy(current->code, code); 
+        		
+            	displayOptimalDeliveryPath(graph, 0, destIdx, current);
+            	// 更新快递柜的信息 
+        		printf("快递柜："); 
+				addParcelInfo(graph->vertices[destIdx].locker, current->id, current->sender, current->receiver, current->address, current->code);             	
+        		graph->vertices[destIdx].locker->head->Status = DELIVERED;
 			}
         } else {
             // 显示地址错误信息并跳过此快递
@@ -233,12 +246,21 @@ void deliverParcels(Parcels* parcels, Graph* graph, PriorityQueue* pq) {
     // 首先处理所有加急快递
     while (!isPriorityQueueEmpty(pq)) {
 		PriorityQueueItem* urgentItem = prioritydequeue(pq);
-        if (urgentItem) {
-            // 使用最短路径算法计算最优配送路径并打印
-
+        if (urgentItem) { 
             int start = 0;
-            int end = convertAddressToIndex(graph, urgentItem->parcel->address);
-            displayOptimalDeliveryPath(graph, start, end, urgentItem->parcel);
+            int end = addressToIndex(graph, urgentItem->parcel->address);
+            
+            char code[7];
+			generateCode(code);
+            Parcel* parcel = urgentItem->parcel; 			
+			strcpy(parcel->code, code); 
+
+			// 使用最短路径算法计算最优配送路径并打印
+            displayOptimalDeliveryPath(graph, start, end, parcel);
+            // 更新快递柜中的信息 
+			printf("快递柜%s：", parcel->address); 
+			addParcelInfo(graph->vertices[end].locker, parcel->id, parcel->sender, parcel->receiver, parcel->address, code);
+			graph->vertices[end].locker->head->Status = DELIVERED;            
             printf("加急快递已送达。\n");
             free(urgentItem);
         }
@@ -246,23 +268,6 @@ void deliverParcels(Parcels* parcels, Graph* graph, PriorityQueue* pq) {
     // 然后处理普通快递
     traverseAndDeliver(parcels, graph);
 }
-
-// 查找快递信息并返回指向该快递的指针
-//Parcel* findParcelById(Parcels* parcels, int id) {
-//    if (!parcels || !parcels->head) return NULL;
-//
-//    Parcel *current = parcels->head;
-//    while (current != NULL && current->id != id) {
-//        current = current->next;
-//    }
-//
-//    // 如果找到了匹配的快递，则返回指向它的指针
-//    if (current != NULL && current->id == id) {
-//        return current;
-//    } else {
-//        return NULL; // 未找到快递
-//    }
-//}
 
 //处理加急快递 
 void expediteParcels(int parcelId, Parcels* parcels, TreeNode** root, Graph* graph, PriorityQueue* pq) {
@@ -289,17 +294,56 @@ void expediteParcels(int parcelId, Parcels* parcels, TreeNode** root, Graph* gra
     printf("ID %d 的快递已成功设置为加急状态。\n", parcelId);
 }
 
-
-
-// 更新配送状态
-//void updateParcelStatus(Parcels* parcels, int parcelId, const char* status) {
-//    Parcel* parcel = findParcelById(parcels, parcelId);
-//    if (parcel) {
-//        strcpy(parcel->Status, Status);
-//        printf("快递 ID: %d 的状态已更新为 %s。\n", parcelId, status);
-//    } else {
-//        printf("未找到ID为 %d 的快递。\n", parcelId);
-//    }
-//}
-
-
+void getParcel(Graph* graph, Parcels* parcels) {
+	printf("请输入你要前往的快递柜所在的宿舍楼：");
+	char address[5];
+	scanf("%s", address);
+    if(strcmp(address,"A") < 0 || strcmp(address,"E") > 0 || strlen(address) != 1 ){
+        printf("地址输入错误!\n");
+        return;
+    }
+    printf("请输入取件码：");
+    char code[7];
+    scanf("%s", code);
+    // 比较对应的快递柜里的快递 
+    int dest = addressToIndex(graph, address);
+    Parcel* parcel = graph->vertices[dest].locker->head;
+    
+    if (parcel == NULL) {
+    	printf("快递柜为空\n");
+	} else {
+		printf("%d\n", parcel->id); 
+	}
+    
+    while (parcel != NULL) {
+		if (!strcmp(parcel->code, code)) {
+			printf("取件码正确\n");
+		} else {
+			printf("%s\n%s", parcel->code, code); 
+		}
+		
+		if (parcel->Status == DELIVERED) {
+			printf("状态正确\n"); 
+		}
+		   	
+    	if (!strcmp(parcel->code, code) && parcel->Status == DELIVERED) {
+	        printf("快递id: %d，寄件人: %s，收件人：%s已成功取出\n",
+	               parcel->id, parcel->sender, parcel->receiver);
+			// 从快递柜中清除 
+			int id = parcel->id;
+	        free(parcel);
+	        // 将总快递链表中的快递状态更新为已签收
+			parcel = parcels->head;
+			while (parcel != NULL) {
+				if (id == parcel->id) {
+					parcel->Status = SIGNED;
+					break;
+				}
+				parcel = parcel->next;
+			} 
+	        return ;
+		}
+		parcel = parcel->next;
+	}
+	printf("未找到对应快递\n");
+} 
