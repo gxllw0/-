@@ -5,6 +5,7 @@
 #include "usersManage.h"
 #include "manageSortingAndStorage.h"
 #include "manageDelivery.h"
+#include "statistic.h"
 
 typedef struct {
     Parcels* parcels; 
@@ -13,6 +14,8 @@ typedef struct {
     TreeNode* root;
     Graph graph;
     PriorityQueue pq;
+	AddressStats addressStats[NUM_ADDRESSES];
+	StatusStats statusStats[NUM_STATUS];    
 } SystemContext;
 
 // 初始化所有数据结构 

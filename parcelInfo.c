@@ -9,7 +9,7 @@ void initParcels(Parcels* parcels) {
 }
 
 // 添加快递信息
-void addParcelInfo(Parcels *parcels, int id, const char* sender, const char* receiver, const char* address, const char *code) {
+void addParcelInfo(Parcels *parcels, int id, char* sender, char* receiver, char* address, char *code) {
     if(strcmp(address,"A") < 0 || strcmp(address,"E") > 0 || strlen(address) != 1 ){
         printf("地址输入错误!\n");
         return;
@@ -312,10 +312,13 @@ void batchImport(Parcels* parcels){
         printf("无法打开文件。\n");
         return;
     }
-    int id;
-    char sender[50], receiver[50], address[100], status[20];
-    while (fscanf(file, "%d,%[^,],%[^,],%[^,],%s\n", &id, sender, receiver, address, status) != EOF) {
-        addParcelInfo(parcels, id, sender, receiver, address, "000");
+    int id, status;
+    char sender[50], receiver[50], address[100];
+    while (fscanf(file, "%d,%[^,],%[^,],%[^,],%d\n", &id, sender, receiver, address, &status) != EOF) {
+        Parcel* parcel = (Parcel*)malloc(sizeof(Parcel));
+        parcel->id = id; strcpy(parcel->sender, sender); strcpy(parcel->receiver, receiver);
+		strcpy(parcel->address, address); parcel->Status = (ParcelStatus)status;
+        addParcel(parcels, parcel);
     }
     fclose(file);
     printf("快递信息已从 parcels.txt 导入。\n");

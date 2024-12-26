@@ -27,17 +27,23 @@ SystemContext* initializeSystem() {
         return NULL;
     }
 
-	//初始化队列 
+	// 初始化队列 
     initQueue(&context->sortingQueue);
 	
-	//初始化树 
+	// 初始化树 
     context->root = NULL;
 
-	//初始化图 
+	// 初始化图 
     initCampusDeliveryGraph(&context->graph);
 	
-	//初始化优先队列 
+	// 初始化优先队列 
     initPriorityQueue(&context->pq);
+    
+    // 初始化地址统计数组
+	initAddressStats(context->addressStats, NUM_ADDRESSES);
+	
+	// 初始化状态统计数组
+	initStatusStats(context->statusStats, NUM_STATUS); 
     
     printf("成功初始化系统。\n");
 

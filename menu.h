@@ -11,7 +11,7 @@ void registerMenu(HashTable* ht);
 // 登录
 void processUserLogin(HashTable *ht); 
 // 根据不同角色生成不同界面 
-void displayMenu();
+void displayMenu(); // 封装后需传参 
 // 处理输入前往对应模块 
 void handleUserInput(SystemContext *context, int choice);
 // 快递信息管理 
@@ -23,6 +23,6 @@ void manageSortingAndStorage(Parcels* parcels, Queue sortingQueue, TreeNode* roo
 // 快递配送模块 
 void manageDelivery(Parcels *parcels, TreeNode* root, Graph graph, PriorityQueue* pq);
 // 数据可视化模块 
-void generateStatistics();
+void generateStatistics(Parcels* parcels, AddressStats* addressStats, int addrSize, StatusStats* statusStats, int statusSize);
 
 #endif

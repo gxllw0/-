@@ -43,7 +43,7 @@ void processUserLogin(HashTable *ht) {
     loginUser(ht, username, password);
 }
 
-void displayMenu(User* currentUser) {
+void displayMenu() {
     printf("\n-----------------------------\n");
     printf("| 校园快递管理系统         |\n");
     printf("-----------------------------\n");
@@ -152,13 +152,13 @@ void handleUserInput(SystemContext *context, int choice) {
 					manageSortingAndStorage(context->parcels, context->sortingQueue, context->root); 
                     break;
                 case 3: // 配送管理
-//                    manageDelivery();
+                    manageDelivery(context->parcels, context->root, context->graph, &context->pq);
                     break;
                 case 4: // 用户管理
                     manageUsers(context->ht);
                     break;
                 case 5: // 数据统计与分析
-                    generateStatistics();
+                    generateStatistics(context->parcels, context->addressStats, NUM_ADDRESSES, context->statusStats, NUM_STATUS);
                     break;
                 case 6: {
 					char userName[50], oldPassword[50], newPassword[50];
@@ -303,7 +303,7 @@ void manageUsers(HashTable* ht) {
 			changePassword(ht, username, user->password, *newPassword ? newPassword : user->password);
    			updateUserInfo(ht, username, newRole);
 		}
-		break;
+			break;
         case 2: {
             char username[50];
             printf("请输入要删除的用户名: ");
@@ -408,7 +408,7 @@ void manageDelivery(Parcels *parcels, TreeNode* root, Graph graph, PriorityQueue
             scanf("%d", &parcelId);
             expediteParcels(parcelId, parcels, &root, &graph,  pq); // 根据id加急快递 
         }
-        break;
+       	break;
         case 3:
             printf("返回上一级。\n");
             return; // 或者根据需要退出循环
@@ -418,17 +418,49 @@ void manageDelivery(Parcels *parcels, TreeNode* root, Graph graph, PriorityQueue
     }
 }
 
-void generateStatistics() {
+void generateStatistics(Parcels* parcels, AddressStats* addressStats, int addrSize, StatusStats* statusStats, int statusSize) {
     printf("\n-----------------------------\n");
     printf("| 数据统计与分析           |\n");
     printf("-----------------------------\n");
-    printf("| 1. 快递流量统计          |\n");
-    printf("| 2. 高峰期统计            |\n");
-    printf("| 3. 生成报表              |\n");
-    printf("| 4. 数据可视化            |\n");
-    printf("| 5. 资源配置优化          |\n");
+    printf("| 1. 快递流量地址统计表    |\n");
+    printf("| 2. 快递流量状态统计表    |\n");
+    printf("| 3. 快递流量地址柱状图    |\n");
+    printf("| 4. 快递流量状态柱状图    |\n");
+    printf("| 5. 高峰期统计            |\n");
+    printf("| 6. 预测快递数量          |\n");
+    printf("| 7. 资源配置优化          |\n");
+    printf("| 8. 返回上一级            |\n");
     printf("-----------------------------\n");
     printf("请输入您的选择: ");
     int subChoice = getIntChoice();
     // 调用相应的函数处理子菜单选项
+    switch (subChoice) {
+    	case 1:
+			printAddressTable(parcels, addressStats, addrSize);
+    		break;
+		case 2:
+			printStatusTable(parcels, statusStats, statusSize);			
+			break;
+		case 3:
+		    printAddressHistogram(parcels, addressStats, addrSize);
+			break;
+		case 4:
+			printStatusHistogram(parcels, statusStats, statusSize);
+	 		break;
+	 	case 5:
+	 		analyzeStats(parcels, addressStats, addrSize);
+	 		break;
+		case 6:
+			predictParcels(parcels, statusStats, statusSize);
+		 	break;
+		case 7:
+			allocateDelivery(parcels, addressStats, addrSize);
+			break;
+		case 8:
+			printf("返回上一级\n");
+			return;
+		default:
+			printf("无效的选择，请重新输入\n");
+			break; 
+	} 
 }

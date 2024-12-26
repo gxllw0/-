@@ -228,7 +228,7 @@ void traverseAndDeliver(Parcels* parcels, Graph* graph) {
         		
             	displayOptimalDeliveryPath(graph, 0, destIdx, current);
             	// 更新快递柜的信息 
-        		printf("快递柜："); 
+        		printf("快递柜%s：", graph->vertices[destIdx].name); 
 				addParcelInfo(graph->vertices[destIdx].locker, current->id, current->sender, current->receiver, current->address, current->code);             	
         		graph->vertices[destIdx].locker->head->Status = DELIVERED;
 			}
@@ -243,6 +243,11 @@ void traverseAndDeliver(Parcels* parcels, Graph* graph) {
 
 void deliverParcels(Parcels* parcels, Graph* graph, PriorityQueue* pq) {
     if (!parcels || !graph) return;
+    
+    if (isPriorityQueueEmpty(pq)) {
+    	printf("pq为空\n");
+	}
+	
     // 首先处理所有加急快递
     while (!isPriorityQueueEmpty(pq)) {
 		PriorityQueueItem* urgentItem = prioritydequeue(pq);

@@ -28,7 +28,7 @@ typedef struct Parcels {
 // 初始化链表
 void initParcels(Parcels* parcels);
 // 新添快递（有新增节点） 
-void addParcelInfo(Parcels* parcels, int id, const char* sender, const char* receiver, const char* address, const char* code); 
+void addParcelInfo(Parcels* parcels, int id, char* sender, char* receiver, char* address, char* code); 
 // 将快递加入链表（没有重新分配内存） 
 void addParcel(Parcels* parcels, Parcel* parcel);
 // 根据快递id更新快递信息 
